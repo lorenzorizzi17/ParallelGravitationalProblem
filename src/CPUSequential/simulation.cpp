@@ -1,6 +1,9 @@
 #include <random>
+#include <iostream>
 #include "simulation.hpp"
+
 #define THRESHOLD 0.01f
+#define DEBUG_MODE
 
 // Distance using minimum image criterion
 double distanceMIC(Real pos1[3], Real pos2[3], Real L) {
@@ -23,6 +26,9 @@ double distanceMIC(Real pos1[3], Real pos2[3], Real L) {
 // --> Particles position are random; avoid particles dangerously close to each other (defined as THRESHOLD*LinearSize)
 // --> Initial velocities are randomly distributed in [-1,1]
 Simulation::Simulation(int n_particles, Real timeStep, Real length) : m_N(n_particles), m_dt(timeStep), m_L(length) {
+    #ifdef DEBUG_MODE
+    std::cout << "Initializing simulation with " << m_N << " particles." << std::endl;
+    #endif
     // Set masses
     for (int i = 0; i < m_N; ++i) {
         Real m = 1.0 + static_cast <Real> (rand()) /( static_cast <Real> (RAND_MAX/(9.0f)));   // RAND is a poor PRNG, but should be ok here
@@ -60,6 +66,9 @@ Simulation::Simulation(int n_particles, Real timeStep, Real length) : m_N(n_part
         m_y.push_back(temp_pos[1]);
         m_z.push_back(temp_pos[2]);
     }
+    #ifdef DEBUG_MODE
+    std::cout << "Initialization complete." << std::endl;
+    #endif
     // Initialize forces to zero
     m_fx.resize(m_N, 0.0f);
     m_fy.resize(m_N, 0.0f);
@@ -86,12 +95,9 @@ Real Simulation::getTotalEnergy() const {
             Real dz = m_z[j] - m_z[i];
 
             // Apply MIC
-            if (dx >  m_L * 0.5f) dx -= m_L;
-            else if (dx < -m_L * 0.5f) dx += m_L;
-            if (dy >  m_L * 0.5f) dy -= m_L;
-            else if (dy < -m_L * 0.5f) dy += m_L;
-            if (dz >  m_L * 0.5f) dz -= m_L;
-            else if (dz < -m_L * 0.5f) dz += m_L;
+            dx -= m_L * std::round(dx / m_L);
+            dy -= m_L * std::round(dy / m_L);
+            dz -= m_L * std::round(dz / m_L);
 
             Real r = std::sqrt(dx*dx + dy*dy + dz*dz + 1e-10f); // Avoid division by zero
             potentialEnergy -= (m_mass[i] * m_mass[j]) / r; // G=1 in our units

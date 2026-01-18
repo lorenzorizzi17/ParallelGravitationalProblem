@@ -23,7 +23,7 @@ class Simulation {
     Simulation(int n_particles, Real timeStep, Real length);
 
     // Crucial part, computes the forces (implemented in computeForces.cpp)
-    void computeForces();
+    double computeForces(bool);
 
     // The numerical integrators (choose which to use in main; implemented in numericalIntegrator.cpp)
     void integrateEuler(int nSteps, int saveEvery, std::string saveEnergy, std::string saveTrajectory);
