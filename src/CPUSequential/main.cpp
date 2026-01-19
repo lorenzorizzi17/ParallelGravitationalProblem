@@ -2,11 +2,11 @@
 
 int main(){
     // Simulation parameters
-    int nParticles = 2;
-    Real timeStep = 0.05;
+    int nParticles = 500;
+    Real timeStep = 0.01;
     Real length = 1000.0f;
-    int nSteps = 100000;
+    int nSteps = 1000;
     // Run !
-    Simulation sim(timeStep, length);
-    sim.integrateVerlet(nSteps, 1, "../../data/energy_N2_Verlet.txt", "../../data/trajectory_N2_Verlet.xyz");
+    Simulation sim(nParticles, timeStep, length);
+    sim.integrateVerlet(nSteps, 1, "", "");
 }

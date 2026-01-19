@@ -3,7 +3,7 @@
 #include "simulation.hpp"
 
 #define THRESHOLD 0.01f
-#define DEBUG_MODE
+//#define DEBUG_MODE
 
 // Distance using minimum image criterion
 double distanceMIC(Real pos1[3], Real pos2[3], Real L) {
