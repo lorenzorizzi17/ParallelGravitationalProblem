@@ -1,11 +1,12 @@
 #include "simulation.hpp"
 
 int main(){
-    int n_particles = 128;
-    Real timeStep = 0.005;
+    // Simulation parameters
+    int nParticles = 2;
+    Real timeStep = 0.05;
     Real length = 1000.0f;
-    Simulation sim(n_particles, timeStep, length);
-
-    int n_steps = 100000;
-    sim.integrateEuler(n_steps, 1, "../../data/energy.txt", "../../data/trajectory.xyz");
+    int nSteps = 100000;
+    // Run !
+    Simulation sim(timeStep, length);
+    sim.integrateVerlet(nSteps, 1, "../../data/energy_N2_Verlet.txt", "../../data/trajectory_N2_Verlet.xyz");
 }

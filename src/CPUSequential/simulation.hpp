@@ -21,17 +21,16 @@ class Simulation {
     public:
     // Constructor (random masses, velocities, positions); implememented in simulation.cpp
     Simulation(int n_particles, Real timeStep, Real length);
+    Simulation(Real timeStep, Real length);
 
     // Crucial part, computes the forces (implemented in computeForces.cpp)
     double computeForces(bool);
 
     // The numerical integrators (choose which to use in main; implemented in numericalIntegrator.cpp)
     void integrateEuler(int nSteps, int saveEvery, std::string saveEnergy, std::string saveTrajectory);
-    void integrateVerlet(int nSteps);
+    void integrateVerlet(int nSteps, int saveEvery, std::string saveEnergy, std::string saveTrajectory);
 
-    // Methods for Analysis/Debug
     Real getTotalEnergy() const;
-    void saveTrajectory(const std::string& filename, int step) const;
 };
 
 #endif

@@ -77,6 +77,39 @@ Simulation::Simulation(int n_particles, Real timeStep, Real length) : m_N(n_part
 }
 
 
+Simulation::Simulation(Real timeStep, Real length){
+    m_N = 2;
+    m_dt = timeStep;
+    m_L = length;
+    // Just two particles, for testing, with same mass
+    // A first particle at rest at the origin (length/2), with huge mass
+    m_mass.push_back(200.0f);
+    m_x.push_back(m_L/2);
+    m_y.push_back(m_L/2);
+    m_z.push_back(m_L/2);
+    m_vx.push_back(0.0f);
+    m_vy.push_back(0.0f);
+    m_vz.push_back(0.0f);
+    
+    // A second particle at (100,0,0), with unit mass and initial velocity zero
+    m_mass.push_back(1.0f);
+    m_x.push_back(m_L/2 + 100.0f);
+    m_y.push_back(m_L/2);
+    m_z.push_back(m_L/2);
+    m_vx.push_back(0.0f);
+    m_vy.push_back(0.0f);
+    m_vz.push_back(1.0f);
+
+    #ifdef DEBUG_MODE
+    std::cout << "Initialization (two bodies) completed" << std::endl;
+    #endif
+    // Initialize forces to zero
+    m_fx.resize(m_N, 0.0f);
+    m_fy.resize(m_N, 0.0f);
+    m_fz.resize(m_N, 0.0f);
+    // All done, good to go
+}
+
 Real Simulation::getTotalEnergy() const {
     Real kineticEnergy = 0.0f;
     Real potentialEnergy = 0.0f;
