@@ -1,13 +1,13 @@
 #include "simulation.hpp"
 
 int main(){
-    omp_set_num_threads(8);
+    omp_set_num_threads(2);
     // Simulation parameters
-    int nParticles = 500;
+    int nParticles = 1000;
     Real timeStep = 0.01;
     Real length = 1000.0f;
-    int nSteps = 100000;
+    int nSteps = 1000;
     // Run !
-    Simulation sim(timeStep, length);
-    sim.integrateEuler(nSteps, 1, "../../data/CPUParallel/energy.dat", "../../data/CPUParallel/trajectory.xyz");
+    Simulation sim(nParticles, timeStep, length);
+    sim.integrateEuler(nSteps, nSteps, "", "");
 }

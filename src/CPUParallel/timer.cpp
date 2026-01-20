@@ -5,6 +5,7 @@
 #include "simulation.hpp"
 
 int main(int argc, char* argv[]) {
+    omp_set_num_threads(2);
     // Valori di default
     int nParticles = 500;
     int nSteps = 1000; 

@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+
 #include "simulation.hpp"
 
 int main(int argc, char* argv[]) {
@@ -18,7 +19,7 @@ int main(int argc, char* argv[]) {
     Simulation sim(nParticles, dt, L);
 
     auto start = std::chrono::high_resolution_clock::now();
-    sim.integrateVerlet(nSteps, nSteps, "", ""); // Don't save to IO
+    sim.integrateEuler(nSteps, nSteps, "", ""); // Don't save to IO
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 
