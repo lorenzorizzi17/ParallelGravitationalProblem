@@ -5,6 +5,7 @@
 #include <cuda_runtime.h>
 
 #define THRESHOLD 0.01f 
+#define DEBUG_MODE
 
 
 double distanceMIC(Real pos1[3], Real pos2[3], Real L) {
@@ -103,6 +104,81 @@ Simulation::Simulation(int n_particles, Real timeStep, Real length) : m_N(n_part
     cudaMemset(d_fx, 0, bytes);
     cudaMemset(d_fy, 0, bytes);
     cudaMemset(d_fz, 0, bytes);
+
+    // Energy buffers
+    cudaMalloc(&d_potEnergy, bytes);
+    cudaMalloc(&d_kinEnergy, bytes);
+
+    #ifdef DEBUG_MODE
+    std::cout << "GPU Initialization complete." << std::endl;
+    #endif
+}
+
+Simulation::Simulation(Real timeStep, Real length){
+    m_N = 2;
+    m_dt = timeStep;
+    m_L = length;
+    // Just two particles, for testing, with same mass
+    // A first particle at rest at the origin (length/2), with huge mass
+    m_mass.push_back(200.0f);
+    m_x.push_back(m_L/2);
+    m_y.push_back(m_L/2);
+    m_z.push_back(m_L/2);
+    m_vx.push_back(0.0f);
+    m_vy.push_back(0.0f);
+    m_vz.push_back(0.0f);
+    
+    // A second particle at (100,0,0), with unit mass and initial velocity zero
+    m_mass.push_back(1.0f);
+    m_x.push_back(m_L/2 + 100.0f);
+    m_y.push_back(m_L/2);
+    m_z.push_back(m_L/2);
+    m_vx.push_back(0.0f);
+    m_vy.push_back(0.0f);
+    m_vz.push_back(1.0f);
+
+    #ifdef DEBUG_MODE
+    std::cout << "Initialization (two bodies) completed" << std::endl;
+    #endif
+    // Initialize forces to zero
+    m_fx.resize(m_N, 0.0f);
+    m_fy.resize(m_N, 0.0f);
+    m_fz.resize(m_N, 0.0f);
+    // All done, good to go
+
+        // GPU PART. We have to allocate device memory and transfer data
+    size_t bytes = m_N * sizeof(Real);
+    // Allocate memory for positions
+    cudaMalloc(&d_x, bytes);
+    cudaMalloc(&d_y, bytes);
+    cudaMalloc(&d_z, bytes);
+    // Allocate memory for velocities
+    cudaMalloc(&d_vx, bytes);
+    cudaMalloc(&d_vy, bytes);
+    cudaMalloc(&d_vz, bytes);
+    // Allocate memory for forces. This is a buffer where threads will write the force for each particle
+    cudaMalloc(&d_fx, bytes);
+    cudaMalloc(&d_fy, bytes);
+    cudaMalloc(&d_fz, bytes);
+    // Masses
+    cudaMalloc(&d_mass, bytes);
+    // Now transfer data from host to device
+    cudaMemcpy(d_x, m_x.data(), bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_y, m_y.data(), bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_z, m_z.data(), bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_vx, m_vx.data(), bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_vy, m_vy.data(), bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_vz, m_vz.data(), bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_mass, m_mass.data(), bytes, cudaMemcpyHostToDevice);
+
+    // Initialize forces on device to zero
+    cudaMemset(d_fx, 0, bytes);
+    cudaMemset(d_fy, 0, bytes);
+    cudaMemset(d_fz, 0, bytes);
+
+    // Energy buffers
+    cudaMalloc(&d_potEnergy, bytes);
+    cudaMalloc(&d_kinEnergy, bytes);
 
     #ifdef DEBUG_MODE
     std::cout << "GPU Initialization complete." << std::endl;
