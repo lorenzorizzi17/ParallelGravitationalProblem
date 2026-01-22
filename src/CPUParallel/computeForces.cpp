@@ -1,7 +1,6 @@
 #include "simulation.hpp"
 #include <omp.h>
 #include <cmath>
-#include <algorithm> // per std::fill (se servisse, ma qui resettiamo nel loop)
 
 // This function will be called by a single thread, hence potentialEnergy is a private variable, no need for a reduction
 double Simulation::computeForces(bool calcEnergy) {

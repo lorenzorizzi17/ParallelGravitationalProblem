@@ -1,32 +1,32 @@
 #include <cuda_runtime.h>
 #include "simulation.hpp"
 
-__global__ void computeForces(const float*  x,  const float*  y,  const float*  z, const float*  mass, float* fx,  float* fy,  float* fz, int N, const float L) {
+__global__ void computeForces(const Real*  x,  const Real*  y,  const Real*  z, const Real*  mass, Real* fx,  Real* fy,  Real* fz, int N, const Real L) {
     // Identify the current thread index
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     // Bound guard
     if (i >= N) return;
 
     // Load positions from memory in the register
-    float my_x = x[i];
-    float my_y = y[i];
-    float my_z = z[i];
+    Real my_x = x[i];
+    Real my_y = y[i];
+    Real my_z = z[i];
     // Load mass from memory
-    float my_mass = mass[i]; 
+    Real my_mass = mass[i]; 
     // Local private accumulators for the acceleration
-    float ax = 0.0f;
-    float ay = 0.0f;
-    float az = 0.0f;
+    Real ax = 0.0f;
+    Real ay = 0.0f;
+    Real az = 0.0f;
 
-    float half_L = 0.5f*L;
+    Real half_L = 0.5f*L;
     // Loop on all other particles
     for (int j = 0; j < N; j++) {
         if (i == j) continue; // Divergence?
 
         // Compute distance
-        float dx = x[j] - my_x;
-        float dy = y[j] - my_y;
-        float dz = z[j] - my_z;
+        Real dx = x[j] - my_x;
+        Real dy = y[j] - my_y;
+        Real dz = z[j] - my_z;
         //MIC
         if (dx > half_L)       dx -= L;
         else if (dx < -half_L) dx += L;
@@ -35,9 +35,9 @@ __global__ void computeForces(const float*  x,  const float*  y,  const float*  
         if (dz > half_L)       dz -= L;
         else if (dz < -half_L) dz += L;
         // Floating point operations!
-        float distSqr = dx*dx + dy*dy + dz*dz + 1e-1f; 
-        float invDist = rsqrtf(distSqr);
-        float force = mass[j] * invDist * invDist * invDist;
+        Real distSqr = dx*dx + dy*dy + dz*dz + 1e-1f; 
+        Real invDist = rsqrtf(distSqr);
+        Real force = mass[j] * invDist * invDist * invDist;
         // Update acc
         ax += force * dx;
         ay += force * dy;
@@ -58,19 +58,19 @@ __global__ void computeEnergy(const Real* x, const Real* y, const Real* z, const
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= N) return;
 
-    float my_x = x[i];
-    float my_y = y[i];
-    float my_z = z[i];
+    Real my_x = x[i];
+    Real my_y = y[i];
+    Real my_z = z[i];
     
-    float potential = 0.0f;
-    float half_L = 0.5f * L;
+    Real potential = 0.0f;
+    Real half_L = 0.5f * L;
 
     for (int j = 0; j < N; j++) {
         if (i == j) continue;
 
-        float dx = x[j] - my_x;
-        float dy = y[j] - my_y;
-        float dz = z[j] - my_z;
+        Real dx = x[j] - my_x;
+        Real dy = y[j] - my_y;
+        Real dz = z[j] - my_z;
 
         // MIC
         if (dx > half_L)       dx -= L;
@@ -81,13 +81,13 @@ __global__ void computeEnergy(const Real* x, const Real* y, const Real* z, const
         else if (dz < -half_L) dz += L;
 
 
-        float distSqr = dx*dx + dy*dy + dz*dz + 1e-1f; 
+        Real distSqr = dx*dx + dy*dy + dz*dz + 1e-1f; 
         
-        float invDist = rsqrtf(distSqr); 
+        Real invDist = rsqrtf(distSqr); 
         potential -= mass[j] * invDist; 
     }
     potEnergyArray[i] = potential * mass[i];
     // Kinetic part
-    float kinetic = 0.5f*mass[i]*(vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i]);
+    Real kinetic = 0.5f*mass[i]*(vx[i]*vx[i]+vy[i]*vy[i]+vz[i]*vz[i]);
     kinEnergyArray[i] = kinetic;
 }

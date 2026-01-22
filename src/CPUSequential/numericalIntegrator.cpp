@@ -8,6 +8,8 @@ void Simulation::integrateEuler(int n_steps, int saveEvery, std::string saveEner
     std::ofstream trajectoryFile; trajectoryFile.open(saveTrajectory);
     trajectoryFile.precision(5);
     trajectoryFile << std::scientific;
+    energyFile.precision(7);  
+    energyFile << std::scientific;
 
     int time = 0;
     // Main loop
@@ -70,6 +72,8 @@ void Simulation::integrateVerlet(int n_steps, int saveEvery, std::string saveEne
     std::ofstream trajectoryFile; trajectoryFile.open(saveTrajectory);
     trajectoryFile.precision(5);
     trajectoryFile << std::scientific;
+    energyFile.precision(7);  
+    energyFile << std::scientific;
 
     int time = 0;
     this->computeForces(false); 

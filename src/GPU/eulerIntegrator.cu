@@ -2,26 +2,26 @@
 #include "simulation.hpp"
 
 
-__global__ void eulerKernel(float* x, float* y, float* z, float* vx, float* vy, float* vz, const float* fx, const float* fy, const float* fz, const float* mass, int N, float dt, float L) {
+__global__ void eulerKernel(Real* x, Real* y, Real* z, Real* vx, Real* vy, Real* vz, const Real* fx, const Real* fy, const Real* fz, const Real* mass, int N, Real dt, Real L) {
     // Index of a thread
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     // Boundary check
     if (i >= N) return;
 
     // From the acceleration and mass vectors, compute (local) acceleration
-    float ax = fx[i] / mass[i];
-    float ay = fy[i] / mass[i];
-    float az = fz[i] / mass[i];
+    Real ax = fx[i] / mass[i];
+    Real ay = fy[i] / mass[i];
+    Real az = fz[i] / mass[i];
 
     // Load velocities
-    float current_vx = vx[i];
-    float current_vy = vy[i];
-    float current_vz = vz[i];
+    Real current_vx = vx[i];
+    Real current_vy = vy[i];
+    Real current_vz = vz[i];
 
     //Load positions and compute next proposal positions
-    float next_x = x[i] + current_vx * dt;
-    float next_y = y[i] + current_vy * dt;
-    float next_z = z[i] + current_vz * dt;
+    Real next_x = x[i] + current_vx * dt;
+    Real next_y = y[i] + current_vy * dt;
+    Real next_z = z[i] + current_vz * dt;
     // Apply PBC
     if (next_x < 0.0f) next_x += L;
     else if (next_x >= L) next_x -= L;
@@ -45,9 +45,11 @@ void Simulation::integrateEulerGPU(int nSteps, int saveEvery, int threadsPerBloc
     std::ofstream trajectoryFile; trajectoryFile.open(saveTrajectory);
     trajectoryFile.precision(5);
     trajectoryFile << std::scientific;
+    energyFile.precision(7);
+    energyFile << std::scientific;
 
-    std::vector<float> potEnergy; potEnergy.resize(m_N);
-    std::vector<float> kinEnergy; kinEnergy.resize(m_N);
+    std::vector<Real> potEnergy; potEnergy.resize(m_N);
+    std::vector<Real> kinEnergy; kinEnergy.resize(m_N);
 
     int blocksPerGrid = (m_N + threadsPerBlock - 1) / threadsPerBlock;
 

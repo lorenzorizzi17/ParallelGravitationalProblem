@@ -2,21 +2,21 @@
 #include "simulation.hpp"
 
 // First step of the Verlet 
-__global__ void verletFirstStepKernel(float* x, float* y, float* z,float* vx, float* vy, float* vz,const float* fx, const float* fy, const float* fz, const float* mass, int N, float dt, float L) {
+__global__ void verletFirstStepKernel(Real* x, Real* y, Real* z,Real* vx, Real* vy, Real* vz,const Real* fx, const Real* fy, const Real* fz, const Real* mass, int N, Real dt, Real L) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= N) return;
     // Retrieve accelerations 
-    float ax = fx[i] / mass[i];
-    float ay = fy[i] / mass[i];
-    float az = fz[i] / mass[i];
+    Real ax = fx[i] / mass[i];
+    Real ay = fy[i] / mass[i];
+    Real az = fz[i] / mass[i];
     //First half-kick
     vx[i] += 0.5f * ax * dt;
     vy[i] += 0.5f * ay * dt;
     vz[i] += 0.5f * az * dt;
     //Update position
-    float next_x = x[i] + vx[i] * dt;
-    float next_y = y[i] + vy[i] * dt;
-    float next_z = z[i] + vz[i] * dt;
+    Real next_x = x[i] + vx[i] * dt;
+    Real next_y = y[i] + vy[i] * dt;
+    Real next_z = z[i] + vz[i] * dt;
     // PBC
     if (next_x < 0.0f) next_x += L; else if (next_x >= L) next_x -= L;
     if (next_y < 0.0f) next_y += L; else if (next_y >= L) next_y -= L;
@@ -28,14 +28,14 @@ __global__ void verletFirstStepKernel(float* x, float* y, float* z,float* vx, fl
 }
 
 // Second step in Velocity Verlet
-__global__ void verletSecondStepKernel(float* vx, float* vy, float* vz, const float* fx, const float* fy, const float* fz, const float* mass, int N, float dt) {
+__global__ void verletSecondStepKernel(Real* vx, Real* vy, Real* vz, const Real* fx, const Real* fy, const Real* fz, const Real* mass, int N, Real dt) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= N) return;
 
     // update accelerations. I divided this part from the previous one to enforce synchronization!!
-    float ax = fx[i] / mass[i];
-    float ay = fy[i] / mass[i];
-    float az = fz[i] / mass[i];
+    Real ax = fx[i] / mass[i];
+    Real ay = fy[i] / mass[i];
+    Real az = fz[i] / mass[i];
 
     // Update velocities, finally
     vx[i] += 0.5f * ax * dt;
@@ -48,12 +48,13 @@ void Simulation::integrateVerletGPU(int nSteps, int saveEvery, int threadsPerBlo
     std::ofstream trajectoryFile; trajectoryFile.open(saveTrajectory);
     trajectoryFile.precision(5);
     trajectoryFile << std::scientific;
+    energyFile.precision(7);
+    energyFile << std::scientific;
 
-    std::vector<float> potEnergy; potEnergy.resize(m_N);
-    std::vector<float> kinEnergy; kinEnergy.resize(m_N);
+    std::vector<Real> potEnergy; potEnergy.resize(m_N);
+    std::vector<Real> kinEnergy; kinEnergy.resize(m_N);
 
     int blocksPerGrid = (m_N + threadsPerBlock - 1) / threadsPerBlock;
-
     // Main loop
     int time = 0;
     // In Velocity Verlet, we have to compute first the forces

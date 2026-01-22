@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[]) {
     // Valori di default
-    int nParticles = 1024;
+    int nParticles = 4*1024;
     int nSteps = 1000; 
     
     if (argc > 1) nParticles = std::atoi(argv[1]);
@@ -19,11 +19,8 @@ int main(int argc, char* argv[]) {
     Simulation sim(nParticles, dt, L);
 
     auto start = std::chrono::high_resolution_clock::now();
-    sim.integrateVerlet(nSteps, nSteps, "", ""); // Don't save to IO
+    sim.integrateVerletGPU(nSteps, nSteps, 128, "", ""); // don't save to IO
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-
     std::cout << nParticles << " " << elapsed.count() << std::endl;
-
-    return 0;
 }

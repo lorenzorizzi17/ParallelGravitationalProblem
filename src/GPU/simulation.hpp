@@ -39,6 +39,7 @@ class Simulation {
 
 };
 
-__global__ void computeForces(const float*  x,  const float*  y,  const float*  z, const float*  mass, float* fx,  float* fy,  float* fz, int N, const float L);
+__global__ void computeForces(const Real*  x,  const Real*  y,  const Real*  z, const Real*  mass, Real* fx,  Real* fy,  Real* fz, int N, const Real L);
+__global__ void computeForcesTiling(const Real* x, const Real*  y, const Real*  z, const Real*  mass, Real*  fx, Real*  fy, Real*  fz, int N, const Real L);
 __global__ void computeEnergy(const Real* x, const Real* y, const Real* z, const Real* vx, const Real* vy, const Real* vz, const Real* mass, Real* energyArray, Real* kinenergy, int N, Real L);
 #endif

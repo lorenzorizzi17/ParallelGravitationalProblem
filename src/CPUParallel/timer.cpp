@@ -5,7 +5,7 @@
 #include "simulation.hpp"
 
 int main(int argc, char* argv[]) {
-    omp_set_num_threads(2);
+    omp_set_num_threads(16);
     // Valori di default
     int nParticles = 500;
     int nSteps = 1000; 
@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     Simulation sim(nParticles, dt, L);
 
     auto start = std::chrono::high_resolution_clock::now();
-    sim.integrateEuler(nSteps, nSteps, "", ""); // Don't save to IO
+    sim.integrateVerlet(nSteps, nSteps, "", ""); // Don't save to IO
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 

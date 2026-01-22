@@ -1,6 +1,7 @@
 #include "simulation.hpp"
 
 int main(){
+    omp_set_num_threads(4);
     // Simulation parameters
     int nParticles = 512;
     Real timeStep = 0.01;
@@ -8,5 +9,5 @@ int main(){
     int nSteps = 10000;
     // Run !
     Simulation sim(nParticles, timeStep, length);
-    sim.integrateEulerGPU(nSteps, 1, 128, "../data/GPU/energyEulerFloat.dat", "../data/GPU/energyEulerFloat.xyz");
+    sim.integrateEuler(nSteps, 1, "../../data/CPUParallel/energyEulerDouble.dat", "../../data/CPUParallel/energyEulerDouble.xyz");
 }

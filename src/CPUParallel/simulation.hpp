@@ -6,7 +6,7 @@
 #include <omp.h>
 
 // To quickly switch precision
-using Real = double; 
+using Real = float; 
 
 class Simulation {
     private:
