@@ -35,7 +35,7 @@ __global__ void computeForces(const Real*  x,  const Real*  y,  const Real*  z, 
         if (dz > half_L)       dz -= L;
         else if (dz < -half_L) dz += L;
         // Floating point operations!
-        Real distSqr = dx*dx + dy*dy + dz*dz + 1e-1f; 
+        Real distSqr = dx*dx + dy*dy + dz*dz + 1e-2f; 
         Real invDist = rsqrtf(distSqr);
         Real force = mass[j] * invDist * invDist * invDist;
         // Update acc

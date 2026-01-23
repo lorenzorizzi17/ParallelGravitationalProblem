@@ -6,9 +6,10 @@ __global__ void verletFirstStepKernel(Real* x, Real* y, Real* z,Real* vx, Real* 
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= N) return;
     // Retrieve accelerations 
-    Real ax = fx[i] / mass[i];
-    Real ay = fy[i] / mass[i];
-    Real az = fz[i] / mass[i];
+    Real inv_mass = 1.f/ mass[i];
+    Real ax = fx[i]* inv_mass;
+    Real ay = fy[i] * inv_mass;
+    Real az = fz[i] *inv_mass;
     //First half-kick
     vx[i] += 0.5f * ax * dt;
     vy[i] += 0.5f * ay * dt;
@@ -31,12 +32,11 @@ __global__ void verletFirstStepKernel(Real* x, Real* y, Real* z,Real* vx, Real* 
 __global__ void verletSecondStepKernel(Real* vx, Real* vy, Real* vz, const Real* fx, const Real* fy, const Real* fz, const Real* mass, int N, Real dt) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= N) return;
-
     // update accelerations. I divided this part from the previous one to enforce synchronization!!
-    Real ax = fx[i] / mass[i];
-    Real ay = fy[i] / mass[i];
-    Real az = fz[i] / mass[i];
-
+    Real inv_mass = 1.f / mass[i];
+    Real ax = fx[i]*inv_mass;
+    Real ay = fy[i]*inv_mass;
+    Real az = fz[i]*inv_mass;
     // Update velocities, finally
     vx[i] += 0.5f * ax * dt;
     vy[i] += 0.5f * ay * dt;
@@ -58,15 +58,15 @@ void Simulation::integrateVerletGPU(int nSteps, int saveEvery, int threadsPerBlo
     // Main loop
     int time = 0;
     // In Velocity Verlet, we have to compute first the forces
-    computeForces<<<blocksPerGrid, threadsPerBlock>>>(d_x, d_y, d_z, d_mass, d_fx, d_fy, d_fz, m_N, m_L);
+    computeForcesTiling<<<blocksPerGrid, threadsPerBlock>>>(d_x, d_y, d_z, d_mass, d_fx, d_fy, d_fz, m_N, m_L);
     while (time < nSteps) {
         verletFirstStepKernel<<<blocksPerGrid, threadsPerBlock>>>(d_x, d_y, d_z, d_vx, d_vy, d_vz, d_fx, d_fy, d_fz, d_mass, m_N, m_dt, m_L);
         // First of all, compute forces on GPU. A kernel will be launched and will fill d_fx, d_fy, d_fz
-        computeForces<<<blocksPerGrid, threadsPerBlock>>>(d_x, d_y, d_z, d_mass, d_fx, d_fy, d_fz, m_N, m_L);
+        computeForcesTiling<<<blocksPerGrid, threadsPerBlock>>>(d_x, d_y, d_z, d_mass, d_fx, d_fy, d_fz, m_N, m_L);
         // Now perform the integration step (in theory, this kernel will wait for the previous to end, so that force-computation and numerical integration are sequential) 
         verletSecondStepKernel<<<blocksPerGrid, threadsPerBlock>>>(d_vx, d_vy, d_vz, d_fx, d_fy, d_fz, d_mass, m_N, m_dt);
     
-        //Here we decide if we want to save once every while (done on the CPU)
+        //Here we decide if we want to save once every while (done on the CPU). It does not need to know anything from the GPU, so it's ok if asynchronous
         bool isSavingStep = (saveEnergy != "") && ((time + 1) % saveEvery == 0);
         if (isSavingStep) {
             // If saving, copy trajectories
