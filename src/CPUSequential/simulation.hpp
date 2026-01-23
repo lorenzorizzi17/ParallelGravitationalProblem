@@ -24,13 +24,11 @@ class Simulation {
     Simulation(Real timeStep, Real length);
 
     // Crucial part, computes the forces (implemented in computeForces.cpp)
-    double computeForces(bool);
+    Real computeForces(bool);
 
     // The numerical integrators (choose which to use in main; implemented in numericalIntegrator.cpp)
     void integrateEuler(int nSteps, int saveEvery, std::string saveEnergy, std::string saveTrajectory);
     void integrateVerlet(int nSteps, int saveEvery, std::string saveEnergy, std::string saveTrajectory);
-
-    Real getTotalEnergy() const;
 };
 
 #endif

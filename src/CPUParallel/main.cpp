@@ -9,5 +9,5 @@ int main(){
     int nSteps = 10000;
     // Run !
     Simulation sim(nParticles, timeStep, length);
-    sim.integrateEuler(nSteps, 1, "../../data/CPUParallel/energyEulerDouble.dat", "../../data/CPUParallel/energyEulerDouble.xyz");
+    sim.integrateEuler(nSteps, 1, "../../data/CPUParallel/energyEulerFloat.dat", "../../data/CPUParallel/energyEulerFloat.xyz");
 }

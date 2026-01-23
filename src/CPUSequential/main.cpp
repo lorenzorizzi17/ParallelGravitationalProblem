@@ -8,5 +8,5 @@ int main(){
     int nSteps = 10000;
     // Run !
     Simulation sim(nParticles, timeStep, length);
-    sim.integrateVerlet(nSteps, 1, "../../data/CPUSequential/energyVerletDouble.dat", "../../data/CPUSequential/energyVerletDouble.xyz");
+    sim.integrateEuler(nSteps, 1, "../../data/CPUSequential/energyEulerFloat.dat", "../../data/CPUSequential/energyEulerFloat.xyz");
 }

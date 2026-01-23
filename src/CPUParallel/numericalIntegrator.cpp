@@ -3,8 +3,10 @@
 
 #include "simulation.hpp"
 
+
+// Euler integrator using OpenMP for multi-threaded execution
 void Simulation::integrateEuler(int n_steps, int saveEvery, std::string saveEnergy, std::string saveTrajectory) {
-    // Output files (energy, trajectories)
+    // Usual output stuff (energy, trajectories)
     std::ofstream energyFile; energyFile.open(saveEnergy);
     std::ofstream trajectoryFile; trajectoryFile.open(saveTrajectory);
     trajectoryFile.precision(5);
@@ -12,20 +14,26 @@ void Simulation::integrateEuler(int n_steps, int saveEvery, std::string saveEner
     energyFile.precision(7);  
     energyFile << std::scientific;
 
+    // Buffer for time, potential and kinetic energy
     int time = 0;
-    double kineticEnergy = 0.0;
-    double potentialEnergy = 0.0;
+    Real kineticEnergy = 0.0;
+    Real potentialEnergy = 0.0;
 
-    // Parallel region. All threads will execute in parallel every single time-step (a final barrier ensures synchronization in time)
-    #pragma omp parallel 
+    // The parallel region. All threads will execute in parallel every single time-step (a final barrier ensures synchronization in time)
+    // Here we will create a set of n_threads that will work together for the entire time of the simulation
+    #pragma omp parallel shared(time, kineticEnergy, potentialEnergy)
     {
         while (time < n_steps) {
             // Determine if we need to save this step
             bool isSavingStep = (saveEnergy != "") && ((time + 1) % saveEvery == 0);
+
             // Compute forces (O(N^2)) and potential energy in a parallel fashion. A single thread will compute the forces for a portion of particles
             // (updating a portion of the vectors m_fx, m_fy, m_fz and compute a partial potential energy; then a reduction will sum all partial energies.
-            double partialPotentialEnergy = this->computeForces(isSavingStep); 
+            // Inside this function, threads will encounter a #pragma omp for, hence they will split the work of compouting forces
+            Real partialPotentialEnergy = this->computeForces(isSavingStep); 
             // An implicit barrier is here, to ensure all threads have computed the forces before proceeding
+            // The threads stay alive (no overhead!)
+
             // Now we can update positions and velocities in parallel (again, static scheduling, uniform load)
             #pragma omp for schedule(static)
             for (int i = 0; i < m_N; ++i) {
@@ -37,7 +45,7 @@ void Simulation::integrateEuler(int n_steps, int saveEvery, std::string saveEner
                 m_vx[i] += m_fx[i] * inv_m * m_dt;
                 m_vy[i] += m_fy[i] * inv_m * m_dt;
                 m_vz[i] += m_fz[i] * inv_m * m_dt;
-
+                // PBC
                 if (m_x[i] < 0) m_x[i] += m_L; else if (m_x[i] >= m_L) m_x[i] -= m_L;
                 if (m_y[i] < 0) m_y[i] += m_L; else if (m_y[i] >= m_L) m_y[i] -= m_L;
                 if (m_z[i] < 0) m_z[i] += m_L; else if (m_z[i] >= m_L) m_z[i] -= m_L;
@@ -51,14 +59,14 @@ void Simulation::integrateEuler(int n_steps, int saveEvery, std::string saveEner
                     Real v2 = m_vx[i]*m_vx[i] + m_vy[i]*m_vy[i] + m_vz[i]*m_vz[i];
                     kineticEnergy += 0.5 * m_mass[i] * v2;
                 }
-                // An atomic update should be fine here
+                // An atomic update should be fine here. The variable potentialEnergy is shared among threads, partialPotentialEnergy is private to each thread
                 #pragma omp atomic
                 potentialEnergy += partialPotentialEnergy;
             }
             // Ensure all threads have finished computing energies before the master writes to file. If not savingStep, just a barrier to sync threads
             #pragma omp barrier
 
-            // And now the master thread will reset the energies and save to file if needed
+            // And now just one thread (master thread) will reset the energies and save to file if needed
             #pragma omp master
             {
                 time++;
@@ -79,8 +87,9 @@ void Simulation::integrateEuler(int n_steps, int saveEvery, std::string saveEner
 }
 
 
+// Verlet integrator using OpenMP for multi-threaded execution
 void Simulation::integrateVerlet(int n_steps, int saveEvery, std::string saveEnergy, std::string saveTrajectory) {
-    // Output files (energy, trajectories)
+    // Usual output stuff (energy, trajectories)
     std::ofstream energyFile; energyFile.open(saveEnergy);
     std::ofstream trajectoryFile; trajectoryFile.open(saveTrajectory);
     trajectoryFile.precision(5);
@@ -88,15 +97,18 @@ void Simulation::integrateVerlet(int n_steps, int saveEvery, std::string saveEne
     energyFile.precision(7);  
     energyFile << std::scientific;
 
+    // Buffer for time, potential and kinetic energy
     int time = 0;
-    double kineticEnergy = 0.0;
-    double potentialEnergy = 0.0;
+    Real kineticEnergy = 0.0;
+    Real potentialEnergy = 0.0;
 
-    // Parallel region. All threads will execute in parallel every single time-step (a final barrier ensures synchronization in time)
-    #pragma omp parallel 
+    // The parallel region. All threads will execute in parallel every single time-step (a final barrier ensures synchronization in time)
+    // Here we will create a set of n_threads that will work together for the entire time of the simulation
+    #pragma omp parallel shared(time, kineticEnergy, potentialEnergy)
     {
-        // Initial force computation before starting the time-stepping
-        double partialPotentialEnergy = this->computeForces(false); // An implicit barrier is here, to ensure all threads have computed the forces before proceeding
+        // Initial force computation before starting the time-stepping (needed in Verlet)
+        Real partialPotentialEnergy = this->computeForces(false); // An implicit barrier is here, to ensure all threads have computed the forces before proceeding
+        
         while (time < n_steps) {
             // Determine if we need to save this step
             bool isSavingStep = (saveEnergy != "") && ((time + 1) % saveEvery == 0);
@@ -113,7 +125,7 @@ void Simulation::integrateVerlet(int n_steps, int saveEvery, std::string saveEne
                 m_x[i] += m_vx[i] * m_dt;
                 m_y[i] += m_vy[i] * m_dt;
                 m_z[i] += m_vz[i] * m_dt;
-
+                // PBC
                 if (m_x[i] < 0) m_x[i] += m_L; else if (m_x[i] >= m_L) m_x[i] -= m_L;
                 if (m_y[i] < 0) m_y[i] += m_L; else if (m_y[i] >= m_L) m_y[i] -= m_L;
                 if (m_z[i] < 0) m_z[i] += m_L; else if (m_z[i] >= m_L) m_z[i] -= m_L;
@@ -121,7 +133,8 @@ void Simulation::integrateVerlet(int n_steps, int saveEvery, std::string saveEne
 
             // Now we need to compute forces (O(N^2)) and potential energy in a parallel fashion. A single thread will compute the forces for a portion of particles
             // (updating a portion of the vectors m_fx, m_fy, m_fz and compute a partial potential energy; then a reduction will sum all partial energies.
-            double partialPotentialEnergy = this->computeForces(isSavingStep); // An implicit barrier is here, to ensure all threads have computed the forces before proceeding
+            // Inside this function, threads will encounter a #pragma omp for, hence they will split the work of compouting forces
+            Real partialPotentialEnergy = this->computeForces(isSavingStep); // An implicit barrier is here, to ensure all threads have computed the forces before proceeding
 
             // Verlet integration second half step velocity update
             #pragma omp for schedule(static)
@@ -139,7 +152,7 @@ void Simulation::integrateVerlet(int n_steps, int saveEvery, std::string saveEne
                     Real v2 = m_vx[i]*m_vx[i] + m_vy[i]*m_vy[i] + m_vz[i]*m_vz[i];
                     kineticEnergy += 0.5 * m_mass[i] * v2;
                 }
-                // An atomic update should be fine here
+                // An atomic update should be fine here. The variable potentialEnergy is shared among threads, partialPotentialEnergy is private to each thread
                 #pragma omp atomic
                 potentialEnergy += partialPotentialEnergy;
             }
