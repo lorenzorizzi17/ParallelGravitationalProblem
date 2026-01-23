@@ -6,7 +6,7 @@
 #include "simulation.hpp"
 
 int main(int argc, char* argv[]) {
-    // Valori di default
+    // default values
     int nParticles = 1024;
     int nSteps = 1000; 
     
@@ -22,8 +22,5 @@ int main(int argc, char* argv[]) {
     sim.integrateVerlet(nSteps, nSteps, "", ""); // Don't save to IO
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-
     std::cout << nParticles << " " << elapsed.count() << std::endl;
-
-    return 0;
 }
