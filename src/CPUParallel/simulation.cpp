@@ -89,7 +89,7 @@ Simulation::Simulation(Real timeStep, Real length){
     m_z.push_back(m_L/2);
     m_vx.push_back(0.0f);
     m_vy.push_back(0.0f);
-    m_vz.push_back(0.0f);
+    m_vz.push_back(-1.f / 200.f);  // To have zero total momentum
     
     // A second particle at (100,0,0), with unit mass and initial velocity zero
     m_mass.push_back(1.0f);
