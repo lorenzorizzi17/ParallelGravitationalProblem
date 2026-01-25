@@ -35,8 +35,6 @@ class Simulation {
     // The numerical integrators (choose which to use in main; implemented in numericalIntegrator.cpp)
     void integrateEulerGPU(int nSteps, int threadsPerBlock, int saveEvery, std::string saveEnergy, std::string saveTrajectory);
     void integrateVerletGPU(int nSteps, int threadsPerBlock, int saveEvery, std::string saveEnergy, std::string saveTrajectory);
-
-
 };
 
 __global__ void computeForces(const Real*  x,  const Real*  y,  const Real*  z, const Real*  mass, Real* fx,  Real* fy,  Real* fz, int N, const Real L);

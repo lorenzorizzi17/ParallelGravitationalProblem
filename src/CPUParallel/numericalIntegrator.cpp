@@ -147,6 +147,7 @@ void Simulation::integrateVerlet(int n_steps, int saveEvery, std::string saveEne
 
             // If it is a saving step, compute kinetic energy and sum the partial potential energies
             if (isSavingStep) {
+                //#pragma omp single
                 #pragma omp for schedule(static) reduction(+:kineticEnergy)
                 for (int i = 0; i < m_N; ++i) {
                     Real v2 = m_vx[i]*m_vx[i] + m_vy[i]*m_vy[i] + m_vz[i]*m_vz[i];

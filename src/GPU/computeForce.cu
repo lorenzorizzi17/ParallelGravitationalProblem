@@ -22,7 +22,6 @@ __global__ void computeForces(const Real*  x,  const Real*  y,  const Real*  z, 
     // Loop on all other particles
     for (int j = 0; j < N; j++) {
         if (i == j) continue; // Divergence?
-
         // Compute distance
         Real dx = x[j] - my_x;
         Real dy = y[j] - my_y;

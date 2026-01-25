@@ -12,10 +12,10 @@ This project investigates the computational performance and numerical accuracy o
 
 The project focuses on:
 1. **Numerical Accuracy**: Energy conservation across different integrators (implemented Euler and Verlet integration schemes)
-2. **Performance**: Scalability analysis and speedup measurements
+2. **Performance**: Scalability analysis and speedup measurements across the three implementations
 
 ## Project Structure
-The fundamental findings are reported in a Python notebook, whose only purpose is to analyze data offline and create plots and graphs (`src/report.ipynb`). The codebase can be found in the `src/` folder and is logically divided into three folders. More details on how to compile/build can be found in the local README.md
+The fundamental findings are reported in a Python notebook, whose only purpose is to analyze data offline and create plots and graphs (`src/report.ipynb`). The codebase can be found in the `src/` folder and is logically divided into three folders. **More details on how to compile/build can be found in the local README.md for each directory, please have a look at those**
 
 ```
 ├── README.md                    # This file
@@ -49,60 +49,16 @@ The fundamental findings are reported in a Python notebook, whose only purpose i
 │       └── timer.cu              # GPU timing utilities
 ```
 
-## Key Implementation Details
-
-**OpenMP (CPU Parallel)**
-- Force calculation parallelized using OpenMP directives
-- Each thread processes a subset of particle pairs (all pairs, $O(N^2)$ or reduced pairs using atomic operations)
-- Synchronization barriers between force computation and position updates
-- Supports variable thread counts (2, 4, 8, 16)
-
-**CUDA (GPU)**
-- One CUDA thread per particle
-- Thread block configuration: 128 threads per block (4 warps)
-- Global synchronization via kernel termination between phases
-- Two kernels for Velocity Verlet (half-step predictor-corrector)
-- Tiled memory access pattern for improved cache locality
-
-### Physics Model
-
-The gravitational potential energy and kinetic energy are computed as:
-
-$$H(\vec{r}, \vec{v}) = \frac{1}{2}\sum_i m_i v_i^2 + \frac{1}{2}\sum_{i \neq j} \frac{G m_i m_j}{r_{ij}}$$
-
-Energy conservation serves as the primary validation metric for numerical accuracy.
-
 ## Analysis & Results
 
 The analysis is contained in [report.ipynb](src/report.ipynb), which includes:
 
-- **Energy Conservation Plots**: Tracking $E(t)$ across implementations and integrators
-- **Performance Scaling**: Execution time vs. problem size (N) with speedup curves
-- **Precision Analysis**: Impact of Float vs. Double precision on energy stability
+- **Energy conservation plots**: Tracking $E(t)$ across implementations and integrators
+- **Physical analysis**: Virial theorem, cluster's density...
+- **Performance Scaling**: Execution time vs. problem size (N) with speedup curves using OpenMP or CUDA
 - **Throughput Metrics**: GFLOPS measurements for GPU implementations
 
 ## Compilation & Execution
+Please refer to `src/CPUSequential/README.md`
 
-Each implementation directory contains a `timer.sh` script for automated benchmarking across different particle counts.
-
-### Sequential CPU
-```bash
-cd src/CPUSequential
-g++ -O3 -march=native -ffast-math timer.cpp computeForces.cpp simulation.cpp numericalIntegrator.cpp -o timer.out
-./timer.out
-```
-
-### Parallel CPU (OpenMP)
-```bash
-cd src/CPUParallel
-g++ -O3 -march=native -ffast-math -fopenmp timer.cpp computeForces.cpp simulation.cpp numericalIntegrator.cpp -o timer.out
-./timer.out
-```
-
-### GPU (CUDA)
-```bash
-cd src/GPU
-nvcc -O3 main.cu simulation.cu computeForce.cu computeForceTiling.cu eulerIntegrator.cu verletIntegrator.cu timer.cu -o nbody.out
-./nbody.out
-```
 
