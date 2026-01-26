@@ -62,3 +62,8 @@ The analysis is contained in [report.ipynb](src/report.ipynb), which includes:
 Please refer to `src/CPUSequential/README.md`
 
 
+![animation](https://github.com/user-attachments/assets/374877d3-2312-43d2-ab38-d9f64a4d529c)
+
+
+
+
